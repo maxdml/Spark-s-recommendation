@@ -1,0 +1,16 @@
+#!/bin/bash
+
+export SCORE_HOME="$(cd "`dirname "$0"`"/..; pwd)"
+
+function usage {
+    echo "Usage: create_score_files [directory]"
+    echo "  - directory: A directory containing log directories."
+    exit
+}
+
+if [ "$#" -ne 1 ]; then
+    usage
+    exit
+else
+    python "$SCORE_HOME"/src/main.py $1
+fi
