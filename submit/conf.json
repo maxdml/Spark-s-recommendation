@@ -1,6 +1,9 @@
-{"spark_home" : "/home/max/codeZ/spark"}
-{"back_dir" : "/var/results_back"}
-{"run_log_dir" : "/var/results"}
+{"spark_home" : "/home/max/codeZ/SPARK/spark-1.4.0/"}
+{"spark_logs" : "/home/max/codeZ/SPARK/spark-1.4.0/logs/"}
+{"master_log" : "spark-ripley-org.apache.spark.deploy.master.Master-1-mother.out"}
+{"spark_conf" : "/home/max/codeZ/SPARK/spark-1.4.0/conf/"}
+{"back_dir" : "/var/results_back/"}
+{"results_dir" : "/var/results/"}
 {"pagerank" : "--class org.apache.spark.examples.graphx.Analytics --jars /home/max/codeZ/spark/lib/spark-examples-1.5.0-hadoop2.6.0.jar /home/max/codeZ/spark/examples/src/main/scala/org/apache/spark/examples/graphx/Analytics.scala pagerank hdfs://127.0.0.1:60070/pagerank.small --numEPart=-1"}
 {"wordcount" : "--class WordCount --jars /home/ripley/scala/wc/wc.jar /home/ripley/scala/wc/src/WordCount.scala hdfs://127.0.0.1:60070/somefile"}
 {"kmeans" : "--class com.rahulswaminathan.yarnapplicationstatistics.JavaKMeans /home/csstudent/yarnapplicationstatistics/target/yarnapplicationstatistics-1.0-SNAPSHOT-jar-with-dependencies.jar somefile 5 10"}
