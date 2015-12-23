@@ -43,8 +43,8 @@ for k in "$@"
 
 RESULT_DIR='/var/results/'${APP_ID}'-'${COMBINATION}
 DRIVER_BTRACE='/tmp/'${COMBINATION}'-Driver'
-SPARK_HOME='/opt/spark-1.5.0-bin-hadoop2.6/'
 DRIVER_GC='/tmp/'${COMBINATION}'-DriverGc'
+SPARK_HOME='/opt/spark-1.5.0-bin-hadoop2.6/'
 SLAVES=$SPARK_HOME'conf/slaves'
 EVENT_LOG=${SPARK_HOME}'logs/'${APP_ID}
 MASTER_LOG=${SPARK_HOME}'logs/spark-ripley-org.apache.spark.deploy.master.Master-1-mother.out'
