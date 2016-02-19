@@ -1,7 +1,7 @@
 Usage: create_score_files <directory containing log directories>
 
 This program goes over all generated summary logs, then creates a score file
-per user id.
+per user id. The goal is to create an input for the recommender system.
 
 Example:
 $ ./create_score_files/bin/create_score_files sample_input/
