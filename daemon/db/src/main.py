@@ -17,6 +17,7 @@ class Info:
         self.gc_time = None
         self.avg_cpu_usage = None
         self.max_memory = None
+        self.avg_heap_usage = None
 
     def __repr__(self):
         result = ""
@@ -26,8 +27,9 @@ class Info:
         result += "parameter = " + str(self.parameter) + "\n"
         result += "running_time = " + str(self.running_time) + " (ms)\n"
         result += "gc_time = " + str(self.gc_time) + " (ms)\n"
-        result += "avg_cpu_usage = " + str(self.avg_cpu_usage) + "\n"
+        result += "avg_process_cpu_usage = " + str(self.avg_process_cpu_usage) + "\n"
         result += "max_memory = " + str(self.max_memory) + " (MB)"
+        result += "avg_heap_usage = " + str(self.avg_heap_usage) + " (MB)"
         return result
 
     def create_summary_log(self, fname):
@@ -38,7 +40,7 @@ class Info:
         data["parameter"] = self.parameter
         data["running_time"] = self.running_time
         data["gc_time"] = self.gc_time
-        data["avg_cpu_usage"] = self.avg_cpu_usage
+        data["avg_process_cpu_usage"] = self.avg_process_cpu_usage
         data["max_memory"] = self.max_memory
         f = open(fname, "w")
         f.write(json.dumps(data, indent=4, separators=(',',': ')))
@@ -59,7 +61,9 @@ def main(string):
 
     lst = directory.split("-")
     if len(lst) < 7:
-        print "Invalid directory format."
+        print "Invalid directory format.\n"
+        print "Valid is of the form app-ts-id-e-m-c-appName-parameterSpace.\n"
+        print "e.g. : app-20151105221648-0044-29-14-5-cc-5m"
         return
 
     # parse directory name to get app id, name, and its parameters.
@@ -76,6 +80,7 @@ def main(string):
             return
 
     eventlog_fname = ""
+    #TODO: cheapest way to find the event log?
     for f in listdir(pd):
         if f.split("-")[0] == "app":
             eventlog_fname = join(pd, f)
@@ -87,6 +92,7 @@ def main(string):
 
     # BtraceLogs from all executors
     execdirs = sorted([ d for d in listdir(pd) if isdir(join(pd,d)) ])
+    #TODO: handle the case where no btrace log is present directly from size of btracelog_fnames
     btracelog_fnames = []
     for d in execdirs:
         for f in listdir(join(pd,d)):
@@ -102,8 +108,8 @@ def main(string):
         result.max_memory = max([btracelog.max_memory for btracelog in btracelogs])
 
         # Avg CPU usage among all executors
-        cpu = [btracelog.avg_cpu_load for btracelog in btracelogs]
-        result.avg_cpu_usage = sum(cpu) / len(cpu)
+        cpu = [btracelog.avg_process_cpu_load for btracelog in btracelogs]
+        result.avg_process_cpu_usage = sum(cpu) / len(cpu)
     elif len(btracelogs) == 0:
         print "No BTrace logs exist."
 
