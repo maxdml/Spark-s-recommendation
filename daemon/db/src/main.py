@@ -71,6 +71,36 @@ def findLogs(pd):
 
   return btracelogs, gclog_fnames
 
+"""
+Generates a plot with matplotlib
+:param fig the pyplot figure object
+:param indicator the metric to be plot
+:param x list of x values
+:param y list of y values
+:param xlabel text for abscissa
+:param ylabel text for ordinate
+:param executor_id ID of the executor we gather data from (None for driver)
+:param plots_dir root directory to save the plot
+:return None
+"""
+
+def genPlot(fig, indicator, x, y, xlabel, ylabel, executor_id, plots_dir):
+  if executor_id:
+    plot_name = indicator + '-' + executor_id + '.png'
+  else:
+    plot_name = indicator + '-driver.png'
+
+  plot_loc = plots_dir + indicator + '/'
+
+  if (not isdir(plot_loc)):
+    mkdir(plot_loc)
+
+  plt.plot(x, y, label = indicator)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
+
+  plt.savefig(plot_loc + plot_name)
+  fig.clear()
 
 def main(directory, mode):
   app_info = appInfo()
@@ -116,6 +146,37 @@ def main(directory, mode):
     # BtraceLogs and GC logs from all executors
     btracelogs, gclogs = findLogs(pd)
 
+    fig,ax = plt.subplots()
+
+    # Get Driver logs
+    driver_btrace = None
+    driver_gc = None
+    for f in listdir(pd):
+      if '.btrace' in f:
+        #driver_btrace = BtraceLog(pd + '/' + f)
+        driver_btrace = BtraceLog(join(pd,f))
+      elif 'DriverGc' in f:
+        driver_gc = f
+
+    driver_plots_dir = app_info.app_id + '-driver-plots/'
+    if (not isdir(driver_plots_dir)):
+      mkdir(driver_plots_dir)
+
+    genPlot(fig, 'driver-heap-usage', driver_btrace.time, driver_btrace.heap,
+              'Time in MS', 'JVM Heap usage (MB)', None, driver_plots_dir)
+
+    genPlot(fig, 'driver-non-heap-usage', driver_btrace.time, driver_btrace.non_heap,
+              'Time in MS', 'JVM non Heap usage (MB)', None, driver_plots_dir)
+
+    genPlot(fig, 'driver-memory-usage', driver_btrace.time, driver_btrace.memory,
+              'Time in MS', 'JVM total memory usage (MB)', None, driver_plots_dir)
+
+    genPlot(fig, 'driver-process-cpu-usage', driver_btrace.time, driver_btrace.process_cpu,
+              'Time in MS', 'JVM CPU usage fraction', None, driver_plots_dir)
+
+    genPlot(fig, 'driver-system-cpu-usage', driver_btrace.time, driver_btrace.system_cpu,
+              'Time in MS', 'System CPU usage fraction', None, driver_plots_dir)
+
     if len(btracelogs) > 0:
       ####################################
       # Generate plots for every executor#
@@ -124,79 +185,26 @@ def main(directory, mode):
       if (not isdir(plots_dir)):
         mkdir(plots_dir)
 
-      fig,ax = plt.subplots()
-
-      #TODO: craft a hard-to-read loop to craft the plots (or not?)
       for btracelog in btracelogs:
         # Heap usage
-        plot_name = 'heap-usage-' + btracelog.executor_id + '.png'
-        plot_loc = plots_dir + 'heapUsage/'
-
-        if (not isdir(plot_loc)):
-          mkdir(plot_loc)
-
-        plt.plot(btracelog.time, btracelog.heap, label = 'heap usage')
-        plt.xlabel('Time in MS')
-        plt.ylabel('JVM Heap usage in MB')
-
-        plt.savefig(plot_loc + plot_name)
-        fig.clear()
+        genPlot(fig, 'heap-usage', btracelog.time, btracelog.heap,
+                  'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, plots_dir)
 
         # Non Heap usage
-        plot_name = 'non-heap-usage-' + btracelog.executor_id + '.png'
-        plot_loc = plots_dir + 'nonHeapUsage/'
-
-        if (not isdir(plot_loc)):
-          mkdir(plot_loc)
-
-        plt.plot(btracelog.time, btracelog.non_heap, label = ' non heap usage')
-        plt.xlabel('Time in MS')
-        plt.ylabel('JVM Non Heap usage in MB')
-
-        plt.savefig(plot_loc + plot_name)
-        fig.clear()
+        genPlot(fig, 'non-heap-usage', btracelog.time, btracelog.non_heap,
+                  'Time in MS', 'JVM Non Heap usage (MB)', btracelog.executor_id, plots_dir)
 
         # All memory (non heap + heap)
-        plot_name = 'memory-usage-' + btracelog.executor_id + '.png'
-        plot_loc = plots_dir + 'memoryUsage/'
-
-        if (not isdir(plot_loc)):
-          mkdir(plot_loc)
-
-        plt.plot(btracelog.time, btracelog.memory, label = ' memory usage')
-        plt.xlabel('Time in MS')
-        plt.ylabel('JVM total memory usage')
-
-        plt.savefig(plot_loc + plot_name)
-        fig.clear()
+        genPlot(fig, 'memory-usage', btracelog.time, btracelog.memory,
+                  'Time in MS', 'JVM total memory usage (MB)', btracelog.executor_id, plots_dir)
 
         # Process cpu
-        plot_name = 'process-cpu-usage-' + btracelog.executor_id + '.png'
-        plot_loc = plots_dir + 'processCpuUsage/'
-
-        if (not isdir(plot_loc)):
-          mkdir(plot_loc)
-
-        plt.plot(btracelog.time, btracelog.process_cpu, label = ' process cpu usage')
-        plt.xlabel('Time in MS')
-        plt.ylabel('JVM CPU usage fraction')
-
-        plt.savefig(plot_loc + plot_name)
-        fig.clear()
+        genPlot(fig, 'process-cpu-usage', btracelog.time, btracelog.process_cpu,
+                  'Time in MS', 'JVM CPU usage fraction', btracelog.executor_id, plots_dir)
 
         # System cpu 
-        plot_name = 'system-cpu-usage-' + btracelog.executor_id + '.png'
-        plot_loc = plots_dir + 'systemCpuUsage/'
-
-        if (not isdir(plot_loc)):
-          mkdir(plot_loc)
-
-        plt.plot(btracelog.time, btracelog.system_cpu, label = ' system cpu usage')
-        plt.xlabel('Time in MS')
-        plt.ylabel('System CPU usage fraction')
-
-        plt.savefig(plot_loc + plot_name)
-        fig.clear()
+        genPlot(fig, 'system-cpu-usage', btracelog.time, btracelog.system_cpu,
+                  'Time in MS', 'System CPU usage fraction', btracelog.executor_id, plots_dir)
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
