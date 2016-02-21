@@ -15,9 +15,14 @@ class appInfo:
 
     self.running_time = None
     self.gc_time = None
-    self.avg_cpu_usage = None
+    self.avg_process_cpu_load = None
+    self.avg_system_cpu_load = None
     self.max_memory = None
-    self.avg_heap_usage = None
+    self.max_heap = None
+    self.max_non_heap = None
+    self.avg_heap = None
+    self.avg_non_heap = None
+    self.avg_memory = None
 
   def __repr__(self):
     result = ""
@@ -27,9 +32,14 @@ class appInfo:
     result += "parameter = " + str(self.parameter) + "\n"
     result += "running_time = " + str(self.running_time) + " (ms)\n"
     result += "gc_time = " + str(self.gc_time) + " (ms)\n"
-    result += "avg_process_cpu_usage = " + str(self.avg_process_cpu_usage) + "\n"
+    result += "avg_process_cpu_load = " + str(self.avg_process_cpu_load) + "\n"
+    result += "avg_system_cpu_load = " + str(self.avg_system_cpu_load) + "\n"
     result += "max_memory = " + str(self.max_memory) + " (MB)" + "\n"
-    result += "avg_heap_usage = " + str(self.avg_heap_usage) + " (MB)"
+    result += "max_heap = " + str(self.max_heap) + " (MB)" + "\n"
+    result += "max_non_heap = " + str(self.max_non_heap) + " (MB)" + "\n"
+    result += "avg_heap = " + str(self.avg_heap) + " (MB)" + "\n"
+    result += "avg_non_heap = " + str(self.avg_non_heap) + " (MB)" + "\n"
+    result += "avg_memory = " + str(self.avg_memory) + " (MB)"
     return result
 
   def create_summary_log(self, fname):
@@ -40,8 +50,15 @@ class appInfo:
     data["parameter"] = self.parameter
     data["running_time"] = self.running_time
     data["gc_time"] = self.gc_time
-    data["avg_process_cpu_usage"] = self.avg_process_cpu_usage
+    data["avg_process_cpu_load"] = self.avg_process_cpu_load
+    data["avg_system_cpu_load"] = self.avg_process_cpu_load
     data["max_memory"] = self.max_memory
+    data["max_heap"] = self.max_heap
+    data["max_non_heap"] = self.max_non_heap
+    data["avg_memory"] = self.avg_memory
+    data["avg_heap"] = self.avg_heap
+    data["avg_non_heap"] = self.avg_non_heap
+
     f = open(fname, "w")
     f.write(json.dumps(data, indent=4, separators=(',',': ')))
     f.close()
@@ -95,7 +112,7 @@ def genPlot(fig, indicator, x, y, xlabel, ylabel, executor_id, plots_dir):
   if (not isdir(plot_loc)):
     mkdir(plot_loc)
 
-  plt.plot(x, y, label = indicator)
+  plt.plot(x, y, label = indicator, color = 'black')
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
 
@@ -109,7 +126,7 @@ def genBarPlot(indicators, xlabel, ylabel, plot_loc):
   values = [i[1] for i in indicators]
   executors = [i[0] for i in indicators]
 
-  rects1 = ax.bar(ind, values, color='black')
+  rects1 = ax.bar(ind, values, color = 'black')
 
   ax.set_ylabel(ylabel)
   ax.set_title(xlabel)
@@ -245,28 +262,28 @@ def main(directory, mode):
       # We could/should have one data structure for each holding every metric
 
       plot_name = app_plots_dir + 'max-heap-usage.png'
-      avg_heap_usages = [(btracelog.executor_id, btracelog.max_heap) for btracelog in btracelogs]
-      genBarPlot(avg_heap_usages, 'Executor id', 'Max Heap used (MB)',  plot_name)
+      avg_heaps = [(btracelog.executor_id, btracelog.max_heap) for btracelog in btracelogs]
+      genBarPlot(avg_heaps, 'Executor id', 'Max Heap used (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-heap-usage.png'
-      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_heap_usage) for btracelog in btracelogs]
-      genBarPlot(avg_heap_usages, 'Executor id', 'Average Heap usage (MB)',  plot_name)
+      avg_heaps = [(btracelog.executor_id, btracelog.avg_heap) for btracelog in btracelogs]
+      genBarPlot(avg_heaps, 'Executor id', 'Average Heap usage (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-non-heap-usage.png'
-      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_non_heap_usage) for btracelog in btracelogs]
-      genBarPlot(avg_heap_usages, 'Executor id', 'Average non Heap usage (MB)',  plot_name)
+      avg_heaps = [(btracelog.executor_id, btracelog.avg_non_heap) for btracelog in btracelogs]
+      genBarPlot(avg_heaps, 'Executor id', 'Average non Heap usage (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-memory-usage.png'
-      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_memory_usage) for btracelog in btracelogs]
-      genBarPlot(avg_heap_usages, 'Executor id', 'Average process memory usage (MB)',  plot_name)
+      avg_heaps = [(btracelog.executor_id, btracelog.avg_memory) for btracelog in btracelogs]
+      genBarPlot(avg_heaps, 'Executor id', 'Average process memory usage (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-process-cpu-fraction.png'
-      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_process_cpu_load) for btracelog in btracelogs]
-      genBarPlot(avg_heap_usages, 'Executor id', 'Average process cpu load',  plot_name)
+      avg_heaps = [(btracelog.executor_id, btracelog.avg_process_cpu_load) for btracelog in btracelogs]
+      genBarPlot(avg_heaps, 'Executor id', 'Average process cpu load',  plot_name)
 
       plot_name = app_plots_dir + 'avg-system-cpu-fraction.png'
-      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_system_cpu_load) for btracelog in btracelogs]
-      genBarPlot(avg_heap_usages, 'Executor id', 'Average system cpu load',  plot_name)
+      avg_heaps = [(btracelog.executor_id, btracelog.avg_system_cpu_load) for btracelog in btracelogs]
+      genBarPlot(avg_heaps, 'Executor id', 'Average system cpu load',  plot_name)
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
@@ -277,7 +294,7 @@ def main(directory, mode):
     # Get application wide metrics (average accross all executors) #
     ################################################################
     for f in listdir(pd):
-      if f == directory + "global-log.js":
+      if f == directory + "-global-log.js":
         print "Result already exists."
         return
 
@@ -285,21 +302,38 @@ def main(directory, mode):
     btracelogs, gclogs = findLogs(pd)
 
     if len(btracelogs) > 0:
-      # Max peak memory among all executors
-      app_info.max_memory = max([btracelog.max_memory for btracelog in btracelogs])
-
       # Avg CPU usage among all executors
-      cpu = [btracelog.avg_process_cpu_load for btracelog in btracelogs]
-      app_info.avg_process_cpu_usage = sum(cpu) / len(cpu)
+      process_cpu = [btracelog.avg_process_cpu_load for btracelog in btracelogs]
+      app_info.avg_process_cpu_load = sum(process_cpu) / len(process_cpu)
+
+      system_cpu = [btracelog.avg_system_cpu_load for btracelog in btracelogs]
+      app_info.avg_system_cpu_load = sum(system_cpu) / len(system_cpu)
 
       # Avg Heap usage among all executors
-      heap = [btracelog.avg_heap_usage for btracelog in btracelogs]
-      app_info.avg_heap_usage = sum(heap) / len(heap)
+      avg_heap = [btracelog.avg_heap for btracelog in btracelogs]
+      app_info.avg_heap = sum(avg_heap) / len(avg_heap)
+
+      # Avg non Heap usage among all executors
+      avg_non_heap = [btracelog.avg_non_heap for btracelog in btracelogs]
+      app_info.avg_non_heap = sum(avg_non_heap) / len(avg_non_heap)
+
+      # Avg Heap usage among all executors
+      avg_memory = [btracelog.avg_memory for btracelog in btracelogs]
+      app_info.avg_memory = sum(avg_memory) / len(avg_memory)
+
+      # Max peak memory (heap + non heap) reached by any executor
+      app_info.max_memory = max([btracelog.max_memory for btracelog in btracelogs])
+
+      # Max Heap usage reached by any executor
+      app_info.max_heap = max([btracelog.max_heap for btracelog in btracelogs])
+
+      # Max non heap usage reached by any executor
+      app_info.max_non_heap = max([btracelog.max_non_heap for btracelog in btracelogs])
 
       # Create a json file containing results
-      app_info.create_summary_log(pd + "/" + directory + "global-log.js")
+      app_info.create_summary_log(pd + "/" + directory + "-global-log.js")
 
-      print app_info
+      #print app_info
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
