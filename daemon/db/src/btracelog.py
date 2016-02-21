@@ -1,23 +1,35 @@
 import numpy as np
 
 class BtraceLog:
-    def __init__(self, btracelog_fname):
-        self.btracelog_fname = btracelog_fname
-        self.max_memory = None
-        self.max_heap = None
-        self.max_non_heap = None
-        self.avg_process_cpu_load = None
-        self.avg_system_cpu_load = None
+  def __init__(self, btracelog_fname):
+    self.btracelog_fname = btracelog_fname
+    self.max_memory = None
+    self.max_heap = None
+    self.avg_heap_usage = None
+    self.max_non_heap = None
+    self.avg_process_cpu_load = None
+    self.avg_system_cpu_load = None
+    self.heap = None
+    self.non_heap = None
+    self.memory = None
+    self.process_cpu = None
+    self.system_cpu = None
+    self.time = None
 
-        self.parse()
+    self.executor_id = self.btracelog_fname.split('@')[1].split('.')[0]
+    self.executor_id += "-"
+    self.executor_id += self.btracelog_fname.split('@')[0].split('-')[-1]
 
-    def __repr__(self):
-        return "(" + str(self.max_memory) + "," + str(self.avg_cpu_load) + ")"
+    self.parse()
 
-    def parse(self):
-        time, max_heap, max_non_heap, memory, process_cpu, system_cpu = np.loadtxt(self.btracelog_fname, unpack=True, delimiter=",", usecols=(0,1,2,3,4,5))
-        self.max_memory = max(memory)
-        self.max_heap = max(max_heap)
-        self.max_non_heap = max(max_non_heap)
-        self.avg_process_cpu_load = sum(process_cpu) / len(process_cpu)
-        self.avg_system_cpu_load = sum(system_cpu) / len(system_cpu)
+  def __repr__(self):
+    return "(" + str(self.max_memory) + "," + str(self.avg_process_cpu_load) + ")"
+
+  def parse(self):
+    self.time, self.heap, self.non_heap, self.memory, self.process_cpu, self.system_cpu = np.loadtxt(self.btracelog_fname, unpack=True, delimiter=",", usecols=(0,1,2,3,4,5))
+    self.max_memory = max(self.memory)
+    self.max_heap = max(self.heap)
+    self.max_non_heap = max(self.non_heap)
+    self.avg_heap_usage = sum(self.heap) / len(self.heap)
+    self.avg_process_cpu_load = sum(self.process_cpu) / len(self.process_cpu)
+    self.avg_system_cpu_load = sum(self.system_cpu) / len(self.system_cpu)
