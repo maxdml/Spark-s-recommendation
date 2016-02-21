@@ -18,6 +18,10 @@ class Environment:
         else:
             self.executor_memory = 512 * 1024 * 1024  # default
 
+        self.max_executor_cores = None
+        if "spark.cores.max" in j["Spark Properties"]:
+          self.max_executor_cores = int(j["Spark Properties"]["spark.cores.max"])
+
         self.storage_memory_fraction = None
         if "spark.storage.memoryFraction" in j["Spark Properties"]:
             self.storage_memory_fraction = float(j["Spark Properties"]["spark.storage.memoryFraction"])
