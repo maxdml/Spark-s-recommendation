@@ -1,6 +1,6 @@
-from os import listdir
+from os import listdir, mkdir
 from os.path import isfile, isdir, join
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import sys
 import json
 from eventlog import *
@@ -120,21 +120,83 @@ def main(directory, mode):
       ####################################
       # Generate plots for every executor#
       ####################################
+      plots_dir = app_info.app_id + '-executor-plots/'
+      if (not isdir(plots_dir)):
+        mkdir(plots_dir)
 
-      fig,ax = plot.subplots()
+      fig,ax = plt.subplots()
 
+      #TODO: craft a hard-to-read loop to craft the plots (or not?)
       for btracelog in btracelogs:
         # Heap usage
-        plot_name = "heap-usage-" + btracelog.executor_id
+        plot_name = 'heap-usage-' + btracelog.executor_id + '.png'
+        plot_loc = plots_dir + 'heapUsage/'
+
+        if (not isdir(plot_loc)):
+          mkdir(plot_loc)
+
         plt.plot(btracelog.time, btracelog.heap, label = 'heap usage')
         plt.xlabel('Time in MS')
         plt.ylabel('JVM Heap usage in MB')
-        plt.savefig(plot_name)
+
+        plt.savefig(plot_loc + plot_name)
         fig.clear()
 
         # Non Heap usage
-        # Heap usage
-        # Heap usage
+        plot_name = 'non-heap-usage-' + btracelog.executor_id + '.png'
+        plot_loc = plots_dir + 'nonHeapUsage/'
+
+        if (not isdir(plot_loc)):
+          mkdir(plot_loc)
+
+        plt.plot(btracelog.time, btracelog.non_heap, label = ' non heap usage')
+        plt.xlabel('Time in MS')
+        plt.ylabel('JVM Non Heap usage in MB')
+
+        plt.savefig(plot_loc + plot_name)
+        fig.clear()
+
+        # All memory (non heap + heap)
+        plot_name = 'memory-usage-' + btracelog.executor_id + '.png'
+        plot_loc = plots_dir + 'memoryUsage/'
+
+        if (not isdir(plot_loc)):
+          mkdir(plot_loc)
+
+        plt.plot(btracelog.time, btracelog.memory, label = ' memory usage')
+        plt.xlabel('Time in MS')
+        plt.ylabel('JVM total memory usage')
+
+        plt.savefig(plot_loc + plot_name)
+        fig.clear()
+
+        # Process cpu
+        plot_name = 'process-cpu-usage-' + btracelog.executor_id + '.png'
+        plot_loc = plots_dir + 'processCpuUsage/'
+
+        if (not isdir(plot_loc)):
+          mkdir(plot_loc)
+
+        plt.plot(btracelog.time, btracelog.process_cpu, label = ' process cpu usage')
+        plt.xlabel('Time in MS')
+        plt.ylabel('JVM CPU usage fraction')
+
+        plt.savefig(plot_loc + plot_name)
+        fig.clear()
+
+        # System cpu 
+        plot_name = 'system-cpu-usage-' + btracelog.executor_id + '.png'
+        plot_loc = plots_dir + 'systemCpuUsage/'
+
+        if (not isdir(plot_loc)):
+          mkdir(plot_loc)
+
+        plt.plot(btracelog.time, btracelog.system_cpu, label = ' system cpu usage')
+        plt.xlabel('Time in MS')
+        plt.ylabel('System CPU usage fraction')
+
+        plt.savefig(plot_loc + plot_name)
+        fig.clear()
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
