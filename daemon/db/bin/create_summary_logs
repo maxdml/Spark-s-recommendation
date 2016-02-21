@@ -5,12 +5,13 @@
 export SUMLOG_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 
 function usage {
-    echo "Usage: run [directory]"
+    echo "Usage: run [directory] [mode]"
     echo "  - directory: A directory containing multiple log directories."
+    echo "  - mode: The type of data to plot/extract [executor|application|global]."
     exit
 }
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -ne 2 ]; then
     usage
     exit
 else
@@ -18,7 +19,7 @@ else
     for dir in $root_dir/*
     do
         echo $dir
-        $SUMLOG_HOME/bin/create_summary_log $dir
+        $SUMLOG_HOME/bin/create_summary_log $dir $2
         echo ""
     done
 fi
