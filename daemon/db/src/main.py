@@ -60,7 +60,7 @@ class appInfo:
     data["avg_non_heap"] = self.avg_non_heap
 
     f = open(fname, "w")
-    f.write(json.dumps(data, indent=4, separators=(',',': ')))
+    f.write(json.dumps(data, separators=(',',': ')))
     f.close()
 
 """
@@ -118,6 +118,15 @@ def genPlot(fig, indicator, x, y, xlabel, ylabel, executor_id, plots_dir):
 
   plt.savefig(plot_loc + plot_name)
   fig.clear()
+
+"""
+Generates a bar chart for an executor
+:param indicators: a list of tuples (executor_id, metric_value)
+:param xlabel text for abscissa
+:param ylabel text for ordinate
+:param plot_loc where to save the plot
+:return None
+"""
 
 def genBarPlot(indicators, xlabel, ylabel, plot_loc):
   fig,ax = plt.subplots()
@@ -198,6 +207,9 @@ def main(directory, mode):
     driver_plots_dir = app_info.app_id + '-driver-plots/'
     if (not isdir(driver_plots_dir)):
       mkdir(driver_plots_dir)
+    else:
+      print('app already mined')
+      return
 
     genPlot(fig, 'driver-heap-usage', driver_btrace.time, driver_btrace.heap,
             'Time in MS', 'JVM Heap usage (MB)', None, driver_plots_dir)
@@ -221,6 +233,9 @@ def main(directory, mode):
       plots_dir = app_info.app_id + '-executor-plots/'
       if (not isdir(plots_dir)):
         mkdir(plots_dir)
+      else:
+        print('app already mined')
+        return
 
       for btracelog in btracelogs:
         # Heap usage
@@ -258,6 +273,9 @@ def main(directory, mode):
       app_plots_dir = app_info.app_id + '-plots/'
       if (not isdir(app_plots_dir)):
         mkdir(app_plots_dir)
+      else:
+        print('app already mined')
+        return
 
       # We could/should have one data structure for each holding every metric
 
