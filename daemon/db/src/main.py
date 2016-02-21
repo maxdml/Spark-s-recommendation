@@ -102,6 +102,26 @@ def genPlot(fig, indicator, x, y, xlabel, ylabel, executor_id, plots_dir):
   plt.savefig(plot_loc + plot_name)
   fig.clear()
 
+def genBarPlot(indicators, xlabel, ylabel, plot_loc):
+  fig,ax = plt.subplots()
+
+  ind = np.arange(len(indicators))
+  values = [i[1] for i in indicators]
+  executors = [i[0] for i in indicators]
+
+  rects1 = ax.bar(ind, values, color='black')
+
+  ax.set_ylabel(ylabel)
+  ax.set_title(xlabel)
+  xTickMarks = [executor for executor in executors]
+  ax.set_xticks(ind)
+  xtickNames = ax.set_xticklabels(xTickMarks)
+  plt.setp(xtickNames, rotation=45, fontsize=10)
+
+  plt.savefig(plot_loc)
+
+
+
 def main(directory, mode):
   app_info = appInfo()
 
@@ -163,19 +183,19 @@ def main(directory, mode):
       mkdir(driver_plots_dir)
 
     genPlot(fig, 'driver-heap-usage', driver_btrace.time, driver_btrace.heap,
-              'Time in MS', 'JVM Heap usage (MB)', None, driver_plots_dir)
+            'Time in MS', 'JVM Heap usage (MB)', None, driver_plots_dir)
 
     genPlot(fig, 'driver-non-heap-usage', driver_btrace.time, driver_btrace.non_heap,
-              'Time in MS', 'JVM non Heap usage (MB)', None, driver_plots_dir)
+            'Time in MS', 'JVM non Heap usage (MB)', None, driver_plots_dir)
 
     genPlot(fig, 'driver-memory-usage', driver_btrace.time, driver_btrace.memory,
-              'Time in MS', 'JVM total memory usage (MB)', None, driver_plots_dir)
+            'Time in MS', 'JVM total memory usage (MB)', None, driver_plots_dir)
 
     genPlot(fig, 'driver-process-cpu-usage', driver_btrace.time, driver_btrace.process_cpu,
-              'Time in MS', 'JVM CPU usage fraction', None, driver_plots_dir)
+            'Time in MS', 'JVM CPU usage fraction', None, driver_plots_dir)
 
     genPlot(fig, 'driver-system-cpu-usage', driver_btrace.time, driver_btrace.system_cpu,
-              'Time in MS', 'System CPU usage fraction', None, driver_plots_dir)
+            'Time in MS', 'System CPU usage fraction', None, driver_plots_dir)
 
     if len(btracelogs) > 0:
       ####################################
@@ -188,23 +208,23 @@ def main(directory, mode):
       for btracelog in btracelogs:
         # Heap usage
         genPlot(fig, 'heap-usage', btracelog.time, btracelog.heap,
-                  'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, plots_dir)
+                'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, plots_dir)
 
         # Non Heap usage
         genPlot(fig, 'non-heap-usage', btracelog.time, btracelog.non_heap,
-                  'Time in MS', 'JVM Non Heap usage (MB)', btracelog.executor_id, plots_dir)
+                'Time in MS', 'JVM Non Heap usage (MB)', btracelog.executor_id, plots_dir)
 
         # All memory (non heap + heap)
         genPlot(fig, 'memory-usage', btracelog.time, btracelog.memory,
-                  'Time in MS', 'JVM total memory usage (MB)', btracelog.executor_id, plots_dir)
+                'Time in MS', 'JVM total memory usage (MB)', btracelog.executor_id, plots_dir)
 
         # Process cpu
         genPlot(fig, 'process-cpu-usage', btracelog.time, btracelog.process_cpu,
-                  'Time in MS', 'JVM CPU usage fraction', btracelog.executor_id, plots_dir)
+                'Time in MS', 'JVM CPU usage fraction', btracelog.executor_id, plots_dir)
 
         # System cpu 
         genPlot(fig, 'system-cpu-usage', btracelog.time, btracelog.system_cpu,
-                  'Time in MS', 'System CPU usage fraction', btracelog.executor_id, plots_dir)
+                'Time in MS', 'System CPU usage fraction', btracelog.executor_id, plots_dir)
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
@@ -217,7 +237,37 @@ def main(directory, mode):
       ################################
       # Get metric for all executors #
       ################################
-      print("salut")
+
+      app_plots_dir = app_info.app_id + '-plots/'
+      if (not isdir(app_plots_dir)):
+        mkdir(app_plots_dir)
+
+      # We could/should have one data structure for each holding every metric
+
+      plot_name = app_plots_dir + 'max-heap-usage.png'
+      avg_heap_usages = [(btracelog.executor_id, btracelog.max_heap) for btracelog in btracelogs]
+      genBarPlot(avg_heap_usages, 'Executor id', 'Max Heap used (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-heap-usage.png'
+      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_heap_usage) for btracelog in btracelogs]
+      genBarPlot(avg_heap_usages, 'Executor id', 'Average Heap usage (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-non-heap-usage.png'
+      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_non_heap_usage) for btracelog in btracelogs]
+      genBarPlot(avg_heap_usages, 'Executor id', 'Average non Heap usage (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-memory-usage.png'
+      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_memory_usage) for btracelog in btracelogs]
+      genBarPlot(avg_heap_usages, 'Executor id', 'Average process memory usage (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-process-cpu-fraction.png'
+      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_process_cpu_load) for btracelog in btracelogs]
+      genBarPlot(avg_heap_usages, 'Executor id', 'Average process cpu load',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-system-cpu-fraction.png'
+      avg_heap_usages = [(btracelog.executor_id, btracelog.avg_system_cpu_load) for btracelog in btracelogs]
+      genBarPlot(avg_heap_usages, 'Executor id', 'Average system cpu load',  plot_name)
+
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
 
