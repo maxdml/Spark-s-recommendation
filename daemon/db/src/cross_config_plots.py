@@ -127,7 +127,7 @@ def main(directory_list):
         metric = getattr(app, plot)
         indicators.append((p_id, metric))
 
-      genBarPlot(indicators, plots[plot], 'Configurations', plot_loc)
+      genBarPlot(indicators, 'Configurations', plots[plot], plot_loc)
 
 
 
