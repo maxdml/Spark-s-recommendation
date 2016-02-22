@@ -11,7 +11,7 @@ class appInfo:
     self.app_id = None
     self.conf_id = None
     self.app_name = None
-    self.parameter = None
+    self.parameters = None
 
     self.running_time = None
     self.gc_time = None
@@ -29,7 +29,7 @@ class appInfo:
     result += "app_id = " + str(self.app_id) + "\n"
     result += "conf_id = " + str(self.conf_id) + "\n"
     result += "app_name = " + str(self.app_name) + "\n"
-    result += "parameter = " + str(self.parameter) + "\n"
+    result += "parameters = " + str(self.parameters) + "\n"
     result += "running_time = " + str(self.running_time) + " (ms)\n"
     result += "gc_time = " + str(self.gc_time) + " (ms)\n"
     result += "avg_process_cpu_load = " + str(self.avg_process_cpu_load) + "\n"
@@ -47,7 +47,7 @@ class appInfo:
     data["app_id"] = self.app_id
     data["conf_id"] = self.conf_id
     data["app_name"] = self.app_name
-    data["parameter"] = self.parameter
+    data["parameters"] = self.parameters
     data["running_time"] = self.running_time
     data["gc_time"] = self.gc_time
     data["avg_process_cpu_load"] = self.avg_process_cpu_load
@@ -171,7 +171,7 @@ def main(directory, mode):
   app_info.app_id = "-".join(lst[0:3])
   app_info.conf_id = "-".join(lst[3:6])
   app_info.app_name = lst[6]
-  app_info.parameter = "-".join(lst[7:])
+  app_info.parameters = "-".join(lst[7:])
 
   pd = path + directory
 
