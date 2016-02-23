@@ -113,10 +113,14 @@ def main(directory_list):
         print(f)
         applications.append(AppInfo(join(directory, f)))
 
-    plots = {'running_time'         : 'running time (MS)',
-             'max_heap'             : 'max heap usage (MB)',
-             'avg_process_cpu_load' : 'average cpu load',
-             'avg_heap'             : 'average heap usage (MB)'}
+    plots = {'running_time'             : 'running time (MS)',
+             'gc_time'                  : 'total time spent in GC (MS)',
+             'max_heap'                 : 'max heap usage (MB)',
+             'avg_process_cpu_load'     : 'average cpu load',
+             'avg_heap'                 : 'average heap usage (MB)',
+             'tasks_per_second'         : 'tasks per second',
+             'avg_process_cpu_variance' : 'average cpu variance',
+             'gc_to_rt'                 : 'fraction of time spent in GC (MS)'}
 
     for plot in plots.keys():
       plot_loc = plot_dir + plot + '.png'

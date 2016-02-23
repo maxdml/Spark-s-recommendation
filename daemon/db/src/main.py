@@ -1,4 +1,5 @@
 from os import listdir, mkdir
+from decimal import Decimal
 from os.path import isfile, isdir, join
 import matplotlib.pyplot as plt
 import sys
@@ -15,6 +16,7 @@ class appInfo:
 
     self.running_time = None
     self.gc_time = None
+    self.gc_to_rt = None
 
     self.tasks_per_second = None
 
@@ -50,6 +52,9 @@ class appInfo:
     return result
 
   def create_summary_log(self, fname):
+
+    self.gc_to_rt = round(Decimal(self.gc_time) / Decimal(self.running_time), 3)
+
     data = {}
     data["app_id"] = self.app_id
     data["conf_id"] = self.conf_id
@@ -57,6 +62,7 @@ class appInfo:
     data["parameters"] = self.parameters
     data["running_time"] = self.running_time
     data["gc_time"] = self.gc_time
+    data["gc_to_rt"] = self.gc_to_rt
     data["tasks_per_second"] = self.tasks_per_second
     data["avg_process_cpu_load"] = self.avg_process_cpu_load
     data["avg_system_cpu_load"] = self.avg_process_cpu_load
