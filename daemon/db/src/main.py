@@ -20,6 +20,7 @@ class appInfo:
 
     self.avg_process_cpu_load = None
     self.avg_system_cpu_load = None
+    self.avg_process_cpu_variance = None
     self.max_memory = None
     self.max_heap = None
     self.max_non_heap = None
@@ -39,6 +40,7 @@ class appInfo:
     result += "tasks_per_second = " + str(self.tasks_per_second) + '\n'
     result += "avg_process_cpu_load = " + str(self.avg_process_cpu_load) + "\n"
     result += "avg_system_cpu_load = " + str(self.avg_system_cpu_load) + "\n"
+    result += "avg_process_cpu_variance = " + str(self.avg_process_cpu_variance) + "\n"
     result += "max_memory = " + str(self.max_memory) + " (MB)" + "\n"
     result += "max_heap = " + str(self.max_heap) + " (MB)" + "\n"
     result += "max_non_heap = " + str(self.max_non_heap) + " (MB)" + "\n"
@@ -58,6 +60,7 @@ class appInfo:
     data["tasks_per_second"] = self.tasks_per_second
     data["avg_process_cpu_load"] = self.avg_process_cpu_load
     data["avg_system_cpu_load"] = self.avg_process_cpu_load
+    data["avg_process_cpu_variance"] = self.avg_process_cpu_variance
     data["max_memory"] = self.max_memory
     data["max_heap"] = self.max_heap
     data["max_non_heap"] = self.max_non_heap
@@ -309,6 +312,10 @@ def main(directory, mode):
       avg_heaps = [(btracelog.executor_id, btracelog.avg_system_cpu_load) for btracelog in btracelogs]
       genBarPlot(avg_heaps, 'Executor id', 'Average system cpu load',  plot_name)
 
+      plot_name = app_plots_dir + 'process-cpu-variance.png'
+      avg_heaps = [(btracelog.executor_id, btracelog.process_cpu_variance) for btracelog in btracelogs]
+      genBarPlot(avg_heaps, 'Executor id', 'Process cpu variance',  plot_name)
+
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
 
@@ -332,6 +339,10 @@ def main(directory, mode):
 
       system_cpu = [btracelog.avg_system_cpu_load for btracelog in btracelogs]
       app_info.avg_system_cpu_load = sum(system_cpu) / len(system_cpu)
+
+      # Avg CPU variance among all executors
+      process_cpu_variance = [btracelog.process_cpu_variance for btracelog in btracelogs]
+      app_info.avg_process_cpu_variance = sum(process_cpu_variance) / len(process_cpu_variance)
 
       # Avg Heap usage among all executors
       avg_heap = [btracelog.avg_heap for btracelog in btracelogs]

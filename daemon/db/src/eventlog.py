@@ -72,9 +72,6 @@ class EventLog:
 
     def computeTasksPerSeconds(self):
       if self.successful_tasks:
-        print(self.successful_tasks)
-        print(self.app_runtime / 1000)
-        print(float(self.successful_tasks / (self.app_runtime / 1000)))
         self.tasks_per_seconds = float(self.successful_tasks / (self.app_runtime / 1000))
 
     def get_gc_time(self):
