@@ -12,10 +12,12 @@ class EventLog:
         self.app_runtime = None
         self.gc_time = None
 
+        self.successful_tasks = 0
+        self.tasks_per_second = None
+
         self.parse()
         self.get_gc_time()
-
-
+        self.computeTasksPerSeconds()
 
     ####
     # Returns the list of jobs in which each of jobs contains all the
@@ -58,6 +60,8 @@ class EventLog:
             elif j["Event"] == "SparkListenerTaskEnd":
                 stage_id = j["Stage ID"]
                 stage_attempt_id = j["Stage Attempt ID"]
+                if j['Task End Reason']['Reason'] == 'Success':
+                  self.successful_tasks += 1
                 assert last_job.stages.has_key((stage_id, stage_attempt_id))
                 stage = last_job.stages[(stage_id, stage_attempt_id)]
                 task_id = j["Task Info"]["Task ID"]
@@ -66,22 +70,29 @@ class EventLog:
                 stage.tasks[(task_id, task_attempt_id)].add_end(j)
         f.close()
 
+    def computeTasksPerSeconds(self):
+      if self.successful_tasks:
+        print(self.successful_tasks)
+        print(self.app_runtime / 1000)
+        print(float(self.successful_tasks / (self.app_runtime / 1000)))
+        self.tasks_per_seconds = float(self.successful_tasks / (self.app_runtime / 1000))
+
     def get_gc_time(self):
-        self.gc_time = 0
-        for job in self.jobs:
-            for stage in job.id_sorted_stages:
-                for task in stage.id_sorted_tasks:
-                    self.gc_time += task.task_metrics.jvm_gc_time
+      self.gc_time = 0
+      for job in self.jobs:
+        for stage in job.id_sorted_stages:
+          for task in stage.id_sorted_tasks:
+            self.gc_time += task.task_metrics.jvm_gc_time
 
     def print_info(self):
-        temp = ""
-        for job in self.jobs:
-            temp += "\nJob " + str(job.job_id)
-            for stage in job.id_sorted_stages:
-                temp += "\n  Stage " + str(stage.stage_id) + "\n    Task [ "
-                for task in stage.id_sorted_tasks:
-                    temp += str(task.task_id) + ","
-                temp = temp[:-1]
-                temp += " ]"
-        print temp
-        print ""
+      temp = ""
+      for job in self.jobs:
+        temp += "\nJob " + str(job.job_id)
+        for stage in job.id_sorted_stages:
+          temp += "\n  Stage " + str(stage.stage_id) + "\n    Task [ "
+          for task in stage.id_sorted_tasks:
+            temp += str(task.task_id) + ","
+            temp = temp[:-1]
+            temp += " ]"
+      print temp
+      print ""

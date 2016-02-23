@@ -15,6 +15,9 @@ class appInfo:
 
     self.running_time = None
     self.gc_time = None
+
+    self.tasks_per_second = None
+
     self.avg_process_cpu_load = None
     self.avg_system_cpu_load = None
     self.max_memory = None
@@ -24,6 +27,7 @@ class appInfo:
     self.avg_non_heap = None
     self.avg_memory = None
 
+
   def __repr__(self):
     result = ""
     result += "app_id = " + str(self.app_id) + "\n"
@@ -32,6 +36,7 @@ class appInfo:
     result += "parameters = " + str(self.parameters) + "\n"
     result += "running_time = " + str(self.running_time) + " (ms)\n"
     result += "gc_time = " + str(self.gc_time) + " (ms)\n"
+    result += "tasks_per_second = " + str(self.tasks_per_second) + '\n'
     result += "avg_process_cpu_load = " + str(self.avg_process_cpu_load) + "\n"
     result += "avg_system_cpu_load = " + str(self.avg_system_cpu_load) + "\n"
     result += "max_memory = " + str(self.max_memory) + " (MB)" + "\n"
@@ -50,6 +55,7 @@ class appInfo:
     data["parameters"] = self.parameters
     data["running_time"] = self.running_time
     data["gc_time"] = self.gc_time
+    data["tasks_per_second"] = self.tasks_per_second
     data["avg_process_cpu_load"] = self.avg_process_cpu_load
     data["avg_system_cpu_load"] = self.avg_process_cpu_load
     data["max_memory"] = self.max_memory
