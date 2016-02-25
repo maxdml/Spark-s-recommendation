@@ -89,7 +89,30 @@ def genBarPlot(indicators, xlabel, ylabel, plot_loc):
 
   plt.savefig(plot_loc)
 
+"""
+def genMemoryPlot(indicators, ylimit, xlabel, ylabel, plot_loc):
+  fig,ax = plt.subplots()
 
+  ind = np.arange(len(indicators))
+
+  unzip = zip(*indicators)
+  executors = unzip[0]
+  max_heaps = unzip[1]
+
+ # mem = ax.bar(ind, mem, color = 'red')
+  max_heap = ax.bar(ind, max_heaps, color = 'green')
+
+  ax.set_ylabel(ylabel)
+  ax.set_title(xlabel)
+  ax.set_ylim(ylimit)
+  xTickMarks = [executor for executor in executors]
+  ax.set_xticks(ind)
+  xtickNames = ax.set_xticklabels(xTickMarks)
+  plt.setp(xtickNames, rotation=45, fontsize=10)
+
+  plt.savefig(plot_loc)
+
+"""
 
 def main(directory, mode):
   app_info = appInfo()
@@ -222,34 +245,40 @@ def main(directory, mode):
         return
 
       # We could/should have one data structure for each holding every metric
-
       plot_name = app_plots_dir + 'max-heap-usage.png'
-      avg_heaps = [(btracelog.executor_id, btracelog.max_heap) for btracelog in btracelogs]
-      genBarPlot(avg_heaps, 'Executor id', 'Max Heap used (MB)',  plot_name)
+      max_heaps = [(btracelog.executor_id, btracelog.max_heap) for btracelog in btracelogs]
+      genBarPlot(max_heaps, 'Executor id', 'Max Heap used (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-heap-usage.png'
       avg_heaps = [(btracelog.executor_id, btracelog.avg_heap) for btracelog in btracelogs]
       genBarPlot(avg_heaps, 'Executor id', 'Average Heap usage (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-non-heap-usage.png'
-      avg_heaps = [(btracelog.executor_id, btracelog.avg_non_heap) for btracelog in btracelogs]
-      genBarPlot(avg_heaps, 'Executor id', 'Average non Heap usage (MB)',  plot_name)
+      avg_non_heaps = [(btracelog.executor_id, btracelog.avg_non_heap) for btracelog in btracelogs]
+      genBarPlot(avg_non_heaps, 'Executor id', 'Average non Heap usage (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-memory-usage.png'
-      avg_heaps = [(btracelog.executor_id, btracelog.avg_memory) for btracelog in btracelogs]
-      genBarPlot(avg_heaps, 'Executor id', 'Average process memory usage (MB)',  plot_name)
+      avg_memories = [(btracelog.executor_id, btracelog.avg_memory) for btracelog in btracelogs]
+      genBarPlot(avg_memories, 'Executor id', 'Average process memory usage (MB)',  plot_name)
 
       plot_name = app_plots_dir + 'avg-process-cpu-fraction.png'
-      avg_heaps = [(btracelog.executor_id, btracelog.avg_process_cpu_load) for btracelog in btracelogs]
-      genBarPlot(avg_heaps, 'Executor id', 'Average process cpu load',  plot_name)
+      avg_process_cpus = [(btracelog.executor_id, btracelog.avg_process_cpu_load) for btracelog in btracelogs]
+      genBarPlot(avg_process_cpus, 'Executor id', 'Average process cpu load',  plot_name)
 
       plot_name = app_plots_dir + 'avg-system-cpu-fraction.png'
-      avg_heaps = [(btracelog.executor_id, btracelog.avg_system_cpu_load) for btracelog in btracelogs]
-      genBarPlot(avg_heaps, 'Executor id', 'Average system cpu load',  plot_name)
+      avg_system_cpus = [(btracelog.executor_id, btracelog.avg_system_cpu_load) for btracelog in btracelogs]
+      genBarPlot(avg_system_cpus, 'Executor id', 'Average system cpu load',  plot_name)
 
       plot_name = app_plots_dir + 'process-cpu-variance.png'
-      avg_heaps = [(btracelog.executor_id, btracelog.process_cpu_variance) for btracelog in btracelogs]
-      genBarPlot(avg_heaps, 'Executor id', 'Process cpu variance',  plot_name)
+      avg_cpu_variance = [(btracelog.executor_id, btracelog.process_cpu_variance) for btracelog in btracelogs]
+      genBarPlot(avg_cpu_variance, 'Executor id', 'Process cpu variance',  plot_name)
+
+      """
+      plot_name = app_plots_dir + 'memory-efficiency.png'
+      max_heaps = [(btracelog.executor_id, btracelog.max_heap) for btracelog in btracelogs]
+      max_heap = int(app_info.conf_id.split('-')[1]) * 1000
+      genMemoryPlot(max_heaps, max_heap, 'Executor id', 'Executor Memory efficiency', plot_name)
+      """
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
