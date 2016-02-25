@@ -36,6 +36,55 @@ def genBarPlot(indicators, xlabel, ylabel, plot_loc):
 
   plt.savefig(plot_loc)
 
+
+"""
+Generates a bar chart plot representing an application memory usage.
+One bar display the storage fraction, average and max memory used.
+"""
+
+def genMemoryUsagePlot(indicators, plot_loc):
+  fig,ax = plt.subplots()
+
+  xticks = np.arange(len(indicators))
+
+  unzip = zip(*indicators)
+  mem_line = unzip[1]
+  max_heap_line = unzip[2]
+  confs = unzip[0]
+
+  mem_bar = ax.bar(xticks, mem_line, color='red')
+  max_heap_bar = ax.bar(xticks, max_heap_line, color='green')
+
+  ax.set_ylabel('Heap efficiency (MB)')
+  #ax.set_title('')
+  xTickMarks = [conf for conf in confs]
+  ax.set_xticks(xticks)
+  xtickNames = ax.set_xticklabels(xTickMarks)
+  plt.setp(xtickNames, rotation=45, fontsize=10)
+
+  plt.savefig(plot_loc)
+
+def efficiencyScatterPlot(indicators, plot_loc):
+  fix,ax = plt.subplots()
+
+  xticks = np.arange(len(indicators))
+
+  unzip = zip(*indicators)
+  x = unzip[1]
+  y = unzip[2]
+  confs = unzip[0]
+
+  scatter = ax.scatter(x, y, color='red', s=20, edgecolor='none')
+  ax.set_aspect(1./ax.get_data_ratio())
+
+  ax.set_ylim([0,1])
+  ax.set_xlim([0,1])
+
+  for x, y, c  in zip(x, y, confs):
+    plt.annotate(c, xy = (x,y))
+
+  plt.savefig(plot_loc)
+
 def main(directory_list):
   fh = open(directory_list, 'r')
 
@@ -66,15 +115,28 @@ def main(directory_list):
 
     for plot in plots.keys():
       plot_loc = plot_dir + plot + '.png'
-    
+
       indicators = []
       for app in applications:
-        p_id = app.app_name + '-' + app.conf_id
+        p_id = app.conf_id
         metric = getattr(app, plot)
         indicators.append((p_id, metric))
 
       genBarPlot(indicators, 'Configurations', plots[plot], plot_loc)
 
+
+    memories = []
+    efficiencies = []
+    for app in applications:
+      p_id = getattr(app, 'conf_id')
+      mem = int(p_id.split('-')[1]) * 1000
+      memories.append((app.conf_id, mem, getattr(app, 'max_heap')))
+
+      mem_efficiency = getattr(app, 'max_heap') / mem
+      efficiencies.append((getattr(app, 'conf_id'), mem_efficiency, getattr(app, 'avg_process_cpu_load')))
+
+    genMemoryUsagePlot(memories, plot_dir + 'mem-efficiency.png')
+    efficiencyScatterPlot(efficiencies, plot_dir + 'mem-scatter.png')
 
 
 if __name__ == "__main__":
