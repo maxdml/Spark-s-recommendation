@@ -52,8 +52,8 @@ def genMemoryUsagePlot(indicators, plot_loc):
   max_heap_line = unzip[2]
   confs = unzip[0]
 
-  mem_bar = ax.bar(xticks, mem_line, color='red')
-  max_heap_bar = ax.bar(xticks, max_heap_line, color='green')
+  mem_bar = ax.bar(xticks, mem_line, label='Heap size', color='red')
+  max_heap_bar = ax.bar(xticks, max_heap_line, label='Max heap ever used', color='green')
 
   ax.set_ylabel('Heap efficiency (MB)')
   #ax.set_title('')
@@ -61,6 +61,8 @@ def genMemoryUsagePlot(indicators, plot_loc):
   ax.set_xticks(xticks)
   xtickNames = ax.set_xticklabels(xTickMarks)
   plt.setp(xtickNames, rotation=45, fontsize=10)
+
+  plt.legend(loc = 'upper left')
 
   plt.savefig(plot_loc)
 
@@ -75,10 +77,14 @@ def efficiencyScatterPlot(indicators, plot_loc):
   confs = unzip[0]
 
   scatter = ax.scatter(x, y, color='red', s=20, edgecolor='none')
-  ax.set_aspect(1./ax.get_data_ratio())
+#  ax.set_aspect(1./ax.get_data_ratio())
+  ax.set_aspect('equal')
 
   ax.set_ylim([0,1])
   ax.set_xlim([0,1])
+
+  ax.set_ylabel('CPU load')
+  ax.set_xlabel('Max heap usage over heap size')
 
   for x, y, c  in zip(x, y, confs):
     plt.annotate(c, xy = (x,y))
