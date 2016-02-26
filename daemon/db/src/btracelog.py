@@ -28,10 +28,10 @@ class BtraceLog:
     self.computeProcessCpuVariance()
 
   def __repr__(self):
-    return "(" + str(self.max_memory) + "," + str(self.avg_process_cpu_load) + ")"
+    return "(" + str(self.max_memory) + "," + str(self.avg_process_cpu) + ")"
 
   def parse(self):
-    self.time, self.heap, self.non_heap, self.memory, self.process_cpu_loads, self.system_cpu_loads = np.loadtxt(self.btracelog_fname, unpack=True, delimiter=",", usecols=(0,1,2,3,4,5))
+    self.time, self.heap, self.non_heap, self.memory, self.process_cpu, self.system_cpu = np.loadtxt(self.btracelog_fname, unpack=True, delimiter=",", usecols=(0,1,2,3,4,5))
 
     self.max_memory = max(self.memory)
     self.avg_memory = sum(self.memory) / len(self.memory)
@@ -42,9 +42,9 @@ class BtraceLog:
     self.max_non_heap = max(self.non_heap)
     self.avg_non_heap = sum(self.non_heap) / len(self.non_heap)
 
-    self.avg_process_cpu_load = sum(self.process_cpu_loads) / len(self.process_cpu_loads)
-    self.avg_system_cpu_load = sum(self.system_cpu_loads) / len(self.system_cpu_loads)
+    self.avg_process_cpu_load = sum(self.process_cpu) / len(self.process_cpu)
+    self.avg_system_cpu_load = sum(self.system_cpu) / len(self.system_cpu)
 
   def computeProcessCpuVariance(self):
-    deviations = [(cpu_load - self.avg_process_cpu_load) ** 2 for cpu_load in self.process_cpu_loads]
+    deviations = [(cpu_load - self.avg_process_cpu_load) ** 2 for cpu_load in self.process_cpu]
     self.process_cpu_variance = sum(deviations) / len(deviations)
