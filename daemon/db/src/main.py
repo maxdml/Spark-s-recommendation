@@ -33,7 +33,6 @@ def findLogs(pd):
 
 """
 Generates a plot with matplotlib
-:param fig the pyplot figure object
 :param indicator the metric to be plot
 :param x list of x values
 :param y list of y values
@@ -44,7 +43,9 @@ Generates a plot with matplotlib
 :return None
 """
 
-def genPlot(fig, indicator, x, y, xlabel, ylabel, executor_id, plots_dir):
+def genPlot(indicator, x, y, xlabel, ylabel, executor_id, plots_dir, ylim=None):
+  fig,ax = plt.subplots()
+
   if executor_id:
     plot_name = indicator + '-' + executor_id + '.png'
   else:
@@ -58,6 +59,9 @@ def genPlot(fig, indicator, x, y, xlabel, ylabel, executor_id, plots_dir):
   plt.plot(x, y, label = indicator, color = 'black')
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
+
+  if ylim:
+    ax.set_ylim(top = ylim)
 
   plt.savefig(plot_loc + plot_name)
   fig.clear()
@@ -159,7 +163,7 @@ def main(directory, mode):
     # BtraceLogs and GC logs from all executors
     btracelogs, gclogs = findLogs(pd)
 
-    fig,ax = plt.subplots()
+    heap_size = int(app_info.conf_id.split('-')[1]) * 1000
 
     # Get Driver logs
     driver_btrace = None
@@ -178,19 +182,19 @@ def main(directory, mode):
       print('app already mined')
       return
 
-    genPlot(fig, 'driver-heap-usage', driver_btrace.time, driver_btrace.heap,
+    genPlot('driver-heap-usage', driver_btrace.time, driver_btrace.heap,
             'Time in MS', 'JVM Heap usage (MB)', None, driver_plots_dir)
 
-    genPlot(fig, 'driver-non-heap-usage', driver_btrace.time, driver_btrace.non_heap,
+    genPlot('driver-non-heap-usage', driver_btrace.time, driver_btrace.non_heap,
             'Time in MS', 'JVM non Heap usage (MB)', None, driver_plots_dir)
 
-    genPlot(fig, 'driver-memory-usage', driver_btrace.time, driver_btrace.memory,
+    genPlot('driver-memory-usage', driver_btrace.time, driver_btrace.memory,
             'Time in MS', 'JVM total memory usage (MB)', None, driver_plots_dir)
 
-    genPlot(fig, 'driver-process-cpu-usage', driver_btrace.time, driver_btrace.process_cpu,
+    genPlot('driver-process-cpu-usage', driver_btrace.time, driver_btrace.process_cpu,
             'Time in MS', 'JVM CPU usage fraction', None, driver_plots_dir)
 
-    genPlot(fig, 'driver-system-cpu-usage', driver_btrace.time, driver_btrace.system_cpu,
+    genPlot('driver-system-cpu-usage', driver_btrace.time, driver_btrace.system_cpu,
             'Time in MS', 'System CPU usage fraction', None, driver_plots_dir)
 
     if len(btracelogs) > 0:
@@ -206,23 +210,23 @@ def main(directory, mode):
 
       for btracelog in btracelogs:
         # Heap usage
-        genPlot(fig, 'heap-usage', btracelog.time, btracelog.heap,
-                'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, plots_dir)
+        genPlot('heap-usage', btracelog.time, btracelog.heap,
+                'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, plots_dir, heap_size)
 
         # Non Heap usage
-        genPlot(fig, 'non-heap-usage', btracelog.time, btracelog.non_heap,
+        genPlot('non-heap-usage', btracelog.time, btracelog.non_heap,
                 'Time in MS', 'JVM Non Heap usage (MB)', btracelog.executor_id, plots_dir)
 
         # All memory (non heap + heap)
-        genPlot(fig, 'memory-usage', btracelog.time, btracelog.memory,
+        genPlot('memory-usage', btracelog.time, btracelog.memory,
                 'Time in MS', 'JVM total memory usage (MB)', btracelog.executor_id, plots_dir)
 
         # Process cpu
-        genPlot(fig, 'process-cpu-usage', btracelog.time, btracelog.process_cpu,
+        genPlot('process-cpu-usage', btracelog.time, btracelog.process_cpu,
                 'Time in MS', 'JVM CPU usage fraction', btracelog.executor_id, plots_dir)
 
         # System cpu 
-        genPlot(fig, 'system-cpu-usage', btracelog.time, btracelog.system_cpu,
+        genPlot('system-cpu-usage', btracelog.time, btracelog.system_cpu,
                 'Time in MS', 'System CPU usage fraction', btracelog.executor_id, plots_dir)
 
     elif len(btracelogs) == 0:
