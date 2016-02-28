@@ -2,6 +2,7 @@
 
 from os import listdir, mkdir
 from os.path import isfile, join
+from decimal import Decimal
 import numpy as np
 import time
 import sys 
@@ -66,7 +67,7 @@ def genMemoryUsagePlot(indicators, plot_loc):
 
   plt.savefig(plot_loc)
 
-def efficiencyScatterPlot(indicators, plot_loc):
+def scatterPlot(indicators, ylabel, xlabel, plot_loc):
   fix,ax = plt.subplots()
 
   xticks = np.arange(len(indicators))
@@ -83,13 +84,16 @@ def efficiencyScatterPlot(indicators, plot_loc):
   ax.set_ylim([0,1])
   ax.set_xlim([0,1])
 
-  ax.set_ylabel('CPU load')
-  ax.set_xlabel('Max heap usage over heap size')
+  ax.set_ylabel(ylabel)
+  ax.set_xlabel(xlabel)
 
   for x, y, c  in zip(x, y, confs):
     plt.annotate(c, xy = (x,y))
 
   plt.savefig(plot_loc)
+
+def normalize(n, mn, mx):
+    return round(Decimal(n - mn) / Decimal(mx - mn), 3)
 
 def main(directory_list):
   fh = open(directory_list, 'r')
@@ -110,40 +114,65 @@ def main(directory_list):
         app = appInfo()
         applications.append(app.buildFromJson(join(directory, f)))
 
-    plots = {'running_time'             : 'running time (MS)',
-             'gc_time'                  : 'total time spent in GC (MS)',
-             'max_heap'                 : 'max heap usage (MB)',
-             'avg_process_cpu_load'     : 'average cpu load',
-             'avg_heap'                 : 'average heap usage (MB)',
-             'tasks_per_second'         : 'tasks per second',
-             'avg_process_cpu_variance' : 'average cpu variance',
-             'gc_to_rt'                 : 'fraction of time spent in GC (MS)'}
+  plots = {'running_time'             : 'running time (MS)',
+           'gc_time'                  : 'total time spent in GC (MS)',
+           'max_heap'                 : 'max heap usage (MB)',
+           'avg_process_cpu_load'     : 'average cpu load',
+           'avg_heap'                 : 'average heap usage (MB)',
+           'tasks_per_second'         : 'tasks per second',
+           'avg_process_cpu_variance' : 'average cpu variance',
+           'gc_to_rt'                 : 'fraction of time spent in GC (MS)'}
 
-    for plot in plots.keys():
-      plot_loc = plot_dir + plot + '.png'
+  for plot in plots.keys():
+    plot_loc = plot_dir + plot + '.png'
 
-      indicators = []
-      for app in applications:
-        p_id = app.conf_id
-        metric = getattr(app, plot)
-        indicators.append((p_id, metric))
-
-      genBarPlot(indicators, 'Configurations', plots[plot], plot_loc)
-
-
-    memories = []
-    efficiencies = []
+    indicators = []
     for app in applications:
-      p_id = getattr(app, 'conf_id')
-      mem = int(p_id.split('-')[1]) * 1000
-      memories.append((app.conf_id, mem, getattr(app, 'max_heap')))
+      p_id = app.conf_id
+      metric = getattr(app, plot)
+      indicators.append((p_id, metric))
 
-      mem_efficiency = getattr(app, 'max_heap') / mem
-      efficiencies.append((getattr(app, 'conf_id'), mem_efficiency, getattr(app, 'avg_process_cpu_load')))
+    genBarPlot(indicators, 'Configurations', plots[plot], plot_loc)
 
-    genMemoryUsagePlot(memories, plot_dir + 'mem-efficiency.png')
-    efficiencyScatterPlot(efficiencies, plot_dir + 'mem-scatter.png')
 
+  memories = []
+  mem_efficiencies = []
+  cpu_loads = []
+  for app in applications:
+    p_id = getattr(app, 'conf_id')
+    mem = int(p_id.split('-')[1]) * 1000 # executor heap size in MB
+    mem_efficiency = getattr(app, 'max_heap') / mem
+
+    memories.append((app.conf_id, mem, getattr(app, 'max_heap')))
+    mem_efficiencies.append((getattr(app, 'conf_id'),
+                             mem_efficiency,
+                             int(getattr(app, 'running_time'))))
+    cpu_loads.append((getattr(app, 'conf_id'),
+                      getattr(app, 'avg_process_cpu_load'),
+                      int(getattr(app, 'running_time'))))
+
+  # find min max rt
+  min_rt= min([t[2] for t in cpu_loads])
+  max_rt= max([t[2] for t in cpu_loads])
+  print(min_rt)
+  print(max_rt)
+  # normalize
+  cpu_loads = [(app_id, cpu_load, normalize(rt, min_rt, max_rt)) for (app_id, cpu_load, rt) in cpu_loads]
+  mem_efficiencies = [(app_id, mem, normalize(rt, min_rt, max_rt)) for (app_id, mem, rt) in mem_efficiencies]
+
+  print(cpu_loads)
+  print(mem_efficiencies)
+
+  genMemoryUsagePlot(memories, plot_dir + 'mem-efficiency.png')
+  scatterPlot(mem_efficiencies,
+              'Normalized running time (MS)',
+              'Max heap usage over heap size',
+              plot_dir + 'mem-scatter.png')
+
+  scatterPlot(cpu_loads,
+              'Normalized running time (MS)',
+              'CPU load',
+               plot_dir + 'cpu-scatter.png')
 
 if __name__ == "__main__":
   main(sys.argv[1])
