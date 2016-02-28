@@ -4,11 +4,13 @@ class BtraceLog:
   def __init__(self, btracelog_fname):
     self.btracelog_fname = btracelog_fname
 
-    self.heap = None
-    self.non_heap = None
-    self.memory = None
-    self.process_cpu = None
-    self.system_cpu = None
+    self.time = []
+    self.heap = []
+    self.non_heap = []
+    self.memory = []
+    self.process_cpu = []
+    self.system_cpu = []
+    self.tasks = []
 
     self.max_memory = None
     self.avg_memory = None
@@ -31,7 +33,26 @@ class BtraceLog:
     return "(" + str(self.max_memory) + "," + str(self.avg_process_cpu) + ")"
 
   def parse(self):
-    self.time, self.heap, self.non_heap, self.memory, self.process_cpu, self.system_cpu = np.loadtxt(self.btracelog_fname, unpack=True, delimiter=",", usecols=(0,1,2,3,4,5))
+
+    fh = open(self.btracelog_fname)
+    for line in fh.readlines():
+      line    = line.rstrip('\n\r')
+      columns = line.split(',')
+
+      self.time.append(int(columns[0]))
+      self.heap.append(float(columns[1]))
+      self.non_heap.append(float(columns[2]))
+      self.memory.append(float(columns[3]))
+      self.process_cpu.append(float(columns[4]))
+      self.system_cpu.append(float(columns[5]))
+      try:
+        if (columns[6] and columns[6] == 'task'):
+          event_time = int(columns[0])
+          task_event = columns[7]
+          task_id    = int(columns[8])
+          self.tasks.append((event_time, task_event, task_id))
+      except IndexError:
+        e = 'Pass your way, citizen'
 
     self.max_memory = max(self.memory)
     self.avg_memory = sum(self.memory) / len(self.memory)
