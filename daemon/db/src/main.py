@@ -39,11 +39,13 @@ Generates a plot with matplotlib
 :param xlabel text for abscissa
 :param ylabel text for ordinate
 :param executor_id ID of the executor we gather data from (None for driver)
+:param tasks_events a list of triples (time, task_event, task_id)
 :param plots_dir root directory to save the plot
+:param ylimit the y axis maximum value
 :return None
 """
 
-def genPlot(indicator, x, y, xlabel, ylabel, executor_id, plots_dir, ylim=None):
+def genPlot(indicator, x, y, xlabel, ylabel, executor_id, task_events, plots_dir, ylim=None):
   fig,ax = plt.subplots()
 
   if executor_id:
@@ -62,6 +64,14 @@ def genPlot(indicator, x, y, xlabel, ylabel, executor_id, plots_dir, ylim=None):
 
   if ylim:
     ax.set_ylim(top = ylim)
+
+  starts = [(t,e,i,Y) for t,e,i in task_events for X,Y in zip(x,y) if X == t and e == 'start']
+  ends = [(t,e,i,Y) for t,e,i in task_events for X,Y in zip(x,y) if X == t and e == 'end']
+  for t,e,i,y in starts:
+    plt.plot(t,y, 'o', color='blue')
+  for t,e,i,y in ends:
+    plt.plot(t,y, 'o', color='green')
+    #plt.annotate('task %s %s' % (str(i),e), xy = (t,y))
 
   plt.savefig(plot_loc + plot_name)
   fig.clear()
@@ -183,19 +193,19 @@ def main(directory, mode):
       return
 
     genPlot('driver-heap-usage', driver_btrace.time, driver_btrace.heap,
-            'Time in MS', 'JVM Heap usage (MB)', None, driver_plots_dir)
+            'Time in MS', 'JVM Heap usage (MB)', None, driver_btrace.tasks, driver_plots_dir)
 
     genPlot('driver-non-heap-usage', driver_btrace.time, driver_btrace.non_heap,
-            'Time in MS', 'JVM non Heap usage (MB)', None, driver_plots_dir)
+            'Time in MS', 'JVM non Heap usage (MB)', None, driver_btrace.tasks, driver_plots_dir)
 
     genPlot('driver-memory-usage', driver_btrace.time, driver_btrace.memory,
-            'Time in MS', 'JVM total memory usage (MB)', None, driver_plots_dir)
+            'Time in MS', 'JVM total memory usage (MB)', None, driver_btrace.tasks, driver_plots_dir)
 
     genPlot('driver-process-cpu-usage', driver_btrace.time, driver_btrace.process_cpu,
-            'Time in MS', 'JVM CPU usage fraction', None, driver_plots_dir)
+            'Time in MS', 'JVM CPU usage fraction', None, driver_btrace.tasks, driver_plots_dir)
 
     genPlot('driver-system-cpu-usage', driver_btrace.time, driver_btrace.system_cpu,
-            'Time in MS', 'System CPU usage fraction', None, driver_plots_dir)
+            'Time in MS', 'System CPU usage fraction', None, driver_btrace.tasks, driver_plots_dir)
 
     if len(btracelogs) > 0:
       ####################################
@@ -211,23 +221,23 @@ def main(directory, mode):
       for btracelog in btracelogs:
         # Heap usage
         genPlot('heap-usage', btracelog.time, btracelog.heap,
-                'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, plots_dir, heap_size)
+                'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, btracelog.tasks, plots_dir, heap_size)
 
         # Non Heap usage
         genPlot('non-heap-usage', btracelog.time, btracelog.non_heap,
-                'Time in MS', 'JVM Non Heap usage (MB)', btracelog.executor_id, plots_dir)
+                'Time in MS', 'JVM Non Heap usage (MB)', btracelog.executor_id, btracelog.tasks, plots_dir)
 
         # All memory (non heap + heap)
         genPlot('memory-usage', btracelog.time, btracelog.memory,
-                'Time in MS', 'JVM total memory usage (MB)', btracelog.executor_id, plots_dir)
+                'Time in MS', 'JVM total memory usage (MB)', btracelog.executor_id, btracelog.tasks, plots_dir)
 
         # Process cpu
         genPlot('process-cpu-usage', btracelog.time, btracelog.process_cpu,
-                'Time in MS', 'JVM CPU usage fraction', btracelog.executor_id, plots_dir)
+                'Time in MS', 'JVM CPU usage fraction', btracelog.executor_id, btracelog.tasks, plots_dir)
 
         # System cpu 
         genPlot('system-cpu-usage', btracelog.time, btracelog.system_cpu,
-                'Time in MS', 'System CPU usage fraction', btracelog.executor_id, plots_dir)
+                'Time in MS', 'System CPU usage fraction', btracelog.executor_id, btracelog.tasks, plots_dir)
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."

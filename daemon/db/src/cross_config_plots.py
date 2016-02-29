@@ -154,16 +154,12 @@ def main(directory_list):
   # find min max rt
   min_rt= min([t[2] for t in cpu_loads])
   max_rt= max([t[2] for t in cpu_loads])
-  print(min_rt)
-  print(max_rt)
   # normalize
   cpu_loads = [(app_id, cpu_load, normalize(rt, min_rt, max_rt)) for (app_id, cpu_load, rt) in cpu_loads]
   mem_efficiencies = [(app_id, mem, normalize(rt, min_rt, max_rt)) for (app_id, mem, rt) in mem_efficiencies]
 
-  print(cpu_loads)
-  print(mem_efficiencies)
-
   genMemoryUsagePlot(memories, plot_dir + 'mem-efficiency.png')
+
   scatterPlot(mem_efficiencies,
               'Normalized running time (MS)',
               'Max heap usage over heap size',
