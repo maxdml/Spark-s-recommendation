@@ -6,6 +6,27 @@ from eventlog import *
 from btracelog import *
 from appInfo import *
 
+###################
+#UTILITY FUNCTIONS#
+###################
+
+"""
+Flatten a list of lists and or elements
+:param listObject the list to be flattened
+:return flat list
+"""
+def flattenList(listObject):
+  if not isinstance(listObject, list):
+    return listObject
+  else:
+    if len(listObject) > 0:
+      if isinstance(listObject[0], list):
+        return flattenList(listObject[0]) + flattenList(listObject[1:])
+      else:
+        return [listObject[0]] + listObject[1:]
+    else:
+      return []
+
 """
 Generates a list of btrace and GC log files for the application
 :param pd full path to application directory
@@ -15,19 +36,26 @@ Generates a list of btrace and GC log files for the application
 def findLogs(pd):
   execdirs = sorted([ d for d in listdir(pd) if isdir(join(pd,d)) ])
 
-  btracelog_fnames = []
-  gclog_fnames = []
+  btracelog_fnames = {}
+  gclog_fnames = {}
+  btracelogs = {}
+
+  for execdir in execdirs:
+    btracelog_fnames[execdir] = []
+    btracelogs[execdir] = []
+    gclog_fnames[execdir] = []
+
   for d in execdirs:
     for f in listdir(join(pd,d)):
       fname = join(pd,d,f)
       if isfile(fname) and fname.split(".")[-1] == "btrace":
-        btracelog_fnames.append(fname)
+        btracelog_fnames[d].append(fname)
       elif isfile(fname) and fname.split('-')[0] == 'stdout':
-        gclog_fnames.append(fname)
+        gclog_fnames[d].append(fname)
 
-  btracelogs = []
-  for fname in btracelog_fnames:
-    btracelogs.append(BtraceLog(fname))
+  for worker in btracelog_fnames:
+    for executor in btracelog_fnames[worker]:
+      btracelogs[worker].append(BtraceLog(executor))
 
   return btracelogs, gclog_fnames
 
@@ -127,6 +155,7 @@ def genMemoryPlot(indicators, ylimit, xlabel, ylabel, plot_loc):
   plt.savefig(plot_loc)
 
 """
+#TODO: get executor/application/global actions out of main
 
 def main(directory, mode):
   app_info = appInfo()
@@ -307,41 +336,80 @@ def main(directory, mode):
         print "Result already exists."
         return
 
-    # BtraceLogs and GC logs from all executors
+    # BtraceLogs and GC logs from all workers and their executor(s)
     btracelogs, gclogs = findLogs(pd)
+    app_infos = { 'worker_process_cpus': [],
+                  'process_cpu_variances': [],
+                  'avg_heaps': [],
+                  'avg_non_heaps': [],
+                  'avg_memories': [],
+                  'max_memories': [],
+                  'max_heaps': [],
+                  'max_non_heaps': [],
+                  'system_cpus': [],
+                }
 
     if len(btracelogs) > 0:
-      # Avg CPU usage among all executors
-      process_cpu = [btracelog.avg_process_cpu_load for btracelog in btracelogs]
-      app_info.avg_process_cpu_load = sum(process_cpu) / len(process_cpu)
+      # Avg CPU usage for each worker
+      for worker in btracelogs:
+        app_infos['worker_process_cpus'].append(
+          sum([btracelog.avg_process_cpu_load for btracelog in btracelogs[worker]]))
 
-      system_cpu = [btracelog.avg_system_cpu_load for btracelog in btracelogs]
-      app_info.avg_system_cpu_load = sum(system_cpu) / len(system_cpu)
+        app_infos['process_cpu_variances'].append(
+          [btracelog.process_cpu_variance for btracelog in btracelogs[worker]])
+
+        app_infos['avg_heaps'].append(
+          [btracelog.avg_heap for btracelog in btracelogs[worker]])
+
+        app_infos['avg_non_heaps'].append(
+          [btracelog.avg_non_heap for btracelog in btracelogs[worker]])
+
+        app_infos['avg_memories'].append(
+          [btracelog.avg_memory for btracelog in btracelogs[worker]])
+
+        app_infos['max_memories'].append(
+          max([btracelog.max_memory for btracelog in btracelogs[worker]]))
+
+        app_infos['max_heaps'].append(
+          max([btracelog.max_heap for btracelog in btracelogs[worker]]))
+
+        app_infos['max_non_heaps'].append(
+          max([btracelog.max_non_heap for btracelog in btracelogs[worker]]))
+
+
+      # we probably want only a system view from a single executor on the worker, not all of them?
+      #system_cpu = [btracelog.avg_system_cpu_load for btracelog in btracelogs]
+      #app_info.avg_system_cpu_load = sum(system_cpu) / len(system_cpu)
+
+      # Avg CPU usage among all executors
+      app_info.avg_process_cpu_load = \
+        sum(app_infos['worker_process_cpus']) / len(app_infos['worker_process_cpus'])
 
       # Avg CPU variance among all executors
-      process_cpu_variance = [btracelog.process_cpu_variance for btracelog in btracelogs]
-      app_info.avg_process_cpu_variance = sum(process_cpu_variance) / len(process_cpu_variance)
+      flat_process_cpu_variance = flattenList(app_infos['process_cpu_variances'])
+      app_info.avg_process_cpu_variance = \
+        sum(flat_process_cpu_variance) / len(flat_process_cpu_variance)
 
       # Avg Heap usage among all executors
-      avg_heap = [btracelog.avg_heap for btracelog in btracelogs]
-      app_info.avg_heap = sum(avg_heap) / len(avg_heap)
+      flat_avg_heaps = flattenList(app_infos['avg_heaps'])
+      app_info.avg_heap = sum(flat_avg_heaps) / len(flat_avg_heaps)
 
       # Avg non Heap usage among all executors
-      avg_non_heap = [btracelog.avg_non_heap for btracelog in btracelogs]
-      app_info.avg_non_heap = sum(avg_non_heap) / len(avg_non_heap)
+      flat_avg_non_heaps = flattenList(app_infos['avg_non_heaps'])
+      app_info.avg_non_heap = sum(flat_avg_non_heaps) / len(flat_avg_non_heaps)
 
       # Avg Heap usage among all executors
-      avg_memory = [btracelog.avg_memory for btracelog in btracelogs]
-      app_info.avg_memory = sum(avg_memory) / len(avg_memory)
+      flat_avg_memories = flattenList(app_infos['avg_memories'])
+      app_info.avg_memory = sum(flat_avg_memories) / len(flat_avg_memories)
 
       # Max peak memory (heap + non heap) reached by any executor
-      app_info.max_memory = max([btracelog.max_memory for btracelog in btracelogs])
+      app_info.max_memory = max(app_infos['max_memories'])
 
       # Max Heap usage reached by any executor
-      app_info.max_heap = max([btracelog.max_heap for btracelog in btracelogs])
+      app_info.max_heap = max(app_infos['max_heaps'])
 
       # Max non heap usage reached by any executor
-      app_info.max_non_heap = max([btracelog.max_non_heap for btracelog in btracelogs])
+      app_info.max_non_heap = max(app_infos['max_non_heaps'])
 
       # Create a json file containing results
       app_info.create_summary_log(pd + "/" + directory + "-global-log.js")
