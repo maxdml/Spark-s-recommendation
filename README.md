@@ -1,3 +1,5 @@
+#NOTE: I am currently working on a more advanced profile warehouse for Apache Spark. One key feature is that I will not use the event log file directly to gather data, but rather the monitoring rest API. This repo is kept as legacy.
+
 # Spark-s-recommendation
 Code base to validate and give recommendations to Apache Spark users. We propose a system which
 gathers data (event logs, btrace logs) every time an application is ran through Spark.
