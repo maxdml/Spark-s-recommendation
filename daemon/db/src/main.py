@@ -23,7 +23,7 @@ def flattenList(listObject):
       if isinstance(listObject[0], list):
         return flattenList(listObject[0]) + flattenList(listObject[1:])
       else:
-        return [listObject[0]] + listObject[1:]
+        return [listObject[0]] + flattenList(listObject[1:])
     else:
       return []
 
@@ -247,26 +247,27 @@ def main(directory, mode):
         print('app already mined')
         return
 
-      for btracelog in btracelogs:
-        # Heap usage
-        genPlot('heap-usage', btracelog.time, btracelog.heap,
-                'Time in MS', 'JVM Heap usage in (MB)', btracelog.executor_id, btracelog.tasks, plots_dir, heap_size)
+      for worker in btracelogs:
+        for executor in btracelogs[worker]:
+          # Heap usage
+          genPlot('heap-usage', executor.time, executor.heap,
+                  'Time in MS', 'JVM Heap usage in (MB)', executor.executor_id, executor.tasks, plots_dir, heap_size)
 
-        # Non Heap usage
-        genPlot('non-heap-usage', btracelog.time, btracelog.non_heap,
-                'Time in MS', 'JVM Non Heap usage (MB)', btracelog.executor_id, btracelog.tasks, plots_dir)
+          # Non Heap usage
+          genPlot('non-heap-usage', executor.time, executor.non_heap,
+                  'Time in MS', 'JVM Non Heap usage (MB)', executor.executor_id, executor.tasks, plots_dir)
 
-        # All memory (non heap + heap)
-        genPlot('memory-usage', btracelog.time, btracelog.memory,
-                'Time in MS', 'JVM total memory usage (MB)', btracelog.executor_id, btracelog.tasks, plots_dir)
+          # All memory (non heap + heap)
+          genPlot('memory-usage', executor.time, executor.memory,
+                  'Time in MS', 'JVM total memory usage (MB)', executor.executor_id, executor.tasks, plots_dir)
 
-        # Process cpu
-        genPlot('process-cpu-usage', btracelog.time, btracelog.process_cpu,
-                'Time in MS', 'JVM CPU usage fraction', btracelog.executor_id, btracelog.tasks, plots_dir)
+          # Process cpu
+          genPlot('process-cpu-usage', executor.time, executor.process_cpu,
+                  'Time in MS', 'JVM CPU usage fraction', executor.executor_id, executor.tasks, plots_dir)
 
-        # System cpu 
-        genPlot('system-cpu-usage', btracelog.time, btracelog.system_cpu,
-                'Time in MS', 'System CPU usage fraction', btracelog.executor_id, btracelog.tasks, plots_dir)
+          # System cpu 
+          genPlot('system-cpu-usage', executor.time, executor.system_cpu,
+                  'Time in MS', 'System CPU usage fraction', executor.executor_id, executor.tasks, plots_dir)
 
     elif len(btracelogs) == 0:
       print "No BTrace logs exist."
@@ -287,34 +288,57 @@ def main(directory, mode):
         print('app already mined')
         return
 
-      # We could/should have one data structure for each holding every metric
-      plot_name = app_plots_dir + 'max-heap-usage.png'
-      max_heaps = [(btracelog.executor_id, btracelog.max_heap) for btracelog in btracelogs]
-      genBarPlot(max_heaps, 'Executor id', 'Max Heap used (MB)',  plot_name)
+      app_infos = { 'process_avg_cpus': [],
+                    'process_cpu_variances': [],
+                    'avg_heaps': [],
+                    'avg_non_heaps': [],
+                    'avg_memories': [],
+                    'max_heaps': [],
+                    'system_avg_cpus': []}
 
-      plot_name = app_plots_dir + 'avg-heap-usage.png'
-      avg_heaps = [(btracelog.executor_id, btracelog.avg_heap) for btracelog in btracelogs]
-      genBarPlot(avg_heaps, 'Executor id', 'Average Heap usage (MB)',  plot_name)
+      for worker in btracelogs:
+        app_infos['max_heaps'].append(
+          [(executor.executor_id, executor.max_heap) for executor in btracelogs[worker]])
 
-      plot_name = app_plots_dir + 'avg-non-heap-usage.png'
-      avg_non_heaps = [(btracelog.executor_id, btracelog.avg_non_heap) for btracelog in btracelogs]
-      genBarPlot(avg_non_heaps, 'Executor id', 'Average non Heap usage (MB)',  plot_name)
+        app_infos['avg_heaps'].append(
+          [(executor.executor_id, executor.avg_heap) for executor in btracelogs[worker]])
 
-      plot_name = app_plots_dir + 'avg-memory-usage.png'
-      avg_memories = [(btracelog.executor_id, btracelog.avg_memory) for btracelog in btracelogs]
-      genBarPlot(avg_memories, 'Executor id', 'Average process memory usage (MB)',  plot_name)
+        app_infos['avg_non_heaps'].append(
+          [(executor.executor_id, executor.avg_non_heap) for executor in btracelogs[worker]])
 
-      plot_name = app_plots_dir + 'avg-process-cpu-fraction.png'
-      avg_process_cpus = [(btracelog.executor_id, btracelog.avg_process_cpu_load) for btracelog in btracelogs]
-      genBarPlot(avg_process_cpus, 'Executor id', 'Average process cpu load',  plot_name)
+        app_infos['avg_memories'].append(
+          [(executor.executor_id, executor.avg_memory) for executor in btracelogs[worker]])
 
-      plot_name = app_plots_dir + 'avg-system-cpu-fraction.png'
-      avg_system_cpus = [(btracelog.executor_id, btracelog.avg_system_cpu_load) for btracelog in btracelogs]
-      genBarPlot(avg_system_cpus, 'Executor id', 'Average system cpu load',  plot_name)
+        app_infos['process_avg_cpus'].append(
+          [(executor.executor_id, executor.avg_process_cpu_load) for executor in btracelogs[worker]])
+
+        app_infos['system_avg_cpus'].append(
+          [(executor.executor_id, executor.avg_system_cpu_load) for executor in btracelogs[worker]])
+
+        app_infos['process_cpu_variances'].append(
+          [(executor.executor_id, executor.process_cpu_variance) for executor in btracelogs[worker]])
+
 
       plot_name = app_plots_dir + 'process-cpu-variance.png'
-      avg_cpu_variance = [(btracelog.executor_id, btracelog.process_cpu_variance) for btracelog in btracelogs]
-      genBarPlot(avg_cpu_variance, 'Executor id', 'Process cpu variance',  plot_name)
+      genBarPlot(flattenList(app_infos['process_cpu_variances']), 'Executor id', 'Process cpu variance',  plot_name)
+
+      plot_name = app_plots_dir + 'max-heap-usage.png'
+      genBarPlot(flattenList(app_infos['max_heaps']), 'Executor id', 'Max Heap used (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-heap-usage.png'
+      genBarPlot(flattenList(app_infos['avg_heaps']), 'Executor id', 'Average Heap usage (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-non-heap-usage.png'
+      genBarPlot(flattenList(app_infos['avg_non_heaps']), 'Executor id', 'Average non Heap usage (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-memory-usage.png'
+      genBarPlot(flattenList(app_infos['avg_memories']), 'Executor id', 'Average process memory usage (MB)',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-process-cpu-fraction.png'
+      genBarPlot(flattenList(app_infos['process_avg_cpus']), 'Executor id', 'Average process cpu load',  plot_name)
+
+      plot_name = app_plots_dir + 'avg-system-cpu-fraction.png'
+      genBarPlot(flattenList(app_infos['system_avg_cpus']), 'Executor id', 'Average system cpu load',  plot_name)
 
       """
       plot_name = app_plots_dir + 'memory-efficiency.png'
